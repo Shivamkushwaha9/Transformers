@@ -62,6 +62,7 @@ class PositionalEncoding(nn.Module):
         # Apply cosine to odd indices
         pe[:, 1::2] = torch.cos(position * div_term) # cos(position * (10000 ** (2i / d_model))
         # Add a batch dimension to the positional encoding
+        
         pe = pe.unsqueeze(0) # (1, seq_len, d_model)
         # Register the positional encoding as a buffer
         self.register_buffer('pe', pe)
@@ -193,7 +194,7 @@ class ProjectionLayer(nn.Module):
 
     def forward(self, x) -> None:
         # (batch, seq_len, d_model) --> (batch, seq_len, vocab_size)
-        return self.proj(x)
+        return self.proj(x)    
     
 class Transformer(nn.Module):
 

@@ -22,15 +22,25 @@ class BilingualDataset(Dataset):
         return len(self.ds_raw)
 
     def __getitem__(self, idx):
+        
+        '''Exxtractig the raw source text and RAW TGT TEXT given the index'''
         src_target_pair = self.ds_raw[idx]
         src_text = src_target_pair['translation'][self.src_lang]
         tgt_text = src_target_pair['translation'][self.tgt_lang]
+        
 
         # Transform the text into tokens
+        '''Enoder and decoder input tokens'''
         enc_input_tokens = self.tokenizer_src.encode(src_text).ids
         dec_input_tokens = self.tokenizer_tgt.encode(tgt_text).ids
 
+
+
         # Add sos, eos and padding to each sentence
+        '''Excluding the necessary tokens, Rest will be padded with paddding tokens,
+        which could be later masked out'''
+        
+        #number of padding tokens
         enc_num_padding_tokens = self.seq_len - len(enc_input_tokens) - 2  # We will add <s> and </s>
         # We will only add <s>, and </s> only on the label
         dec_num_padding_tokens = self.seq_len - len(dec_input_tokens) - 1
@@ -78,6 +88,7 @@ class BilingualDataset(Dataset):
         return {
             "encoder_input": encoder_input,  # (seq_len)
             "decoder_input": decoder_input,  # (seq_len)
+            #'''This creates a boolean tensor where each element is True if the corresponding element in encoder_input is not a padding token, and False otherwise.'''
             "encoder_mask": (encoder_input != self.pad_token).unsqueeze(0).unsqueeze(0).int(), # (1, 1, seq_len)
             "decoder_mask": (decoder_input != self.pad_token).unsqueeze(0).int() & causal_mask(decoder_input.size(0)), # (1, seq_len) & (1, seq_len, seq_len),
             "label": label,  # (seq_len)
@@ -86,5 +97,6 @@ class BilingualDataset(Dataset):
         }
     
 def causal_mask(size):
+    '''Upper traingular matrix false rahegi aur lower triangular matrix True'''
     mask = torch.triu(torch.ones((1, size, size)), diagonal=1).type(torch.int)
     return mask == 0
